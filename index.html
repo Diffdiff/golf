@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Golf Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>Simple Golf Game</h1>
+            <div class="score-info">
+                <span>Hole: <span id="current-hole">1</span>/9</span>
+                <span>Strokes: <span id="stroke-count">0</span></span>
+                <span>Par: <span id="par">3</span></span>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <canvas id="golf-canvas" width="800" height="600"></canvas>
+        </div>
+        
+        <div class="controls">
+            <div class="power-control">
+                <label for="power-slider">Power:</label>
+                <input type="range" id="power-slider" min="10" max="100" value="50">
+                <span id="power-value">50</span>%
+            </div>
+            <div class="angle-control">
+                <label for="angle-slider">Angle:</label>
+                <input type="range" id="angle-slider" min="0" max="360" value="0">
+                <span id="angle-value">0</span>°
+            </div>
+            <button id="shoot-btn">Shoot!</button>
+            <button id="reset-btn">Reset Ball</button>
+            <button id="next-hole-btn" style="display:none;">Next Hole</button>
+        </div>
+        
+        <div class="game-info">
+            <div id="messages"></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
