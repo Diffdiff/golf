@@ -35,76 +35,76 @@ class GolfCoursePlanner {
     setupCourse() {
         // Define 18 holes in a top-down course layout
         this.holes = [
-            // Front 9 - Much larger scale holes
-            { id: 1, tee: {x: 300, y: 1700}, hole: {x: 800, y: 1500}, par: 4, obstacles: [
-                {x: 450, y: 1650, width: 120, height: 80, type: 'bunker'},
-                {x: 650, y: 1550, width: 60, height: 100, type: 'tree'}
+            // Front 9 - Clockwise around the course, no overlapping
+            { id: 1, tee: {x: 400, y: 1800}, hole: {x: 400, y: 1500}, par: 4, obstacles: [
+                {x: 350, y: 1650, width: 120, height: 80, type: 'bunker'},
+                {x: 450, y: 1600, width: 60, height: 100, type: 'tree'}
             ]},
-            { id: 2, tee: {x: 200, y: 1400}, hole: {x: 600, y: 1200}, par: 3, obstacles: [
-                {x: 350, y: 1300, width: 150, height: 60, type: 'water'}
+            { id: 2, tee: {x: 600, y: 1450}, hole: {x: 900, y: 1300}, par: 3, obstacles: [
+                {x: 750, y: 1375, width: 150, height: 60, type: 'water'}
             ]},
-            { id: 3, tee: {x: 100, y: 1100}, hole: {x: 700, y: 800}, par: 5, obstacles: [
-                {x: 300, y: 1000, width: 80, height: 120, type: 'tree'},
-                {x: 500, y: 900, width: 180, height: 80, type: 'bunker'}
+            { id: 3, tee: {x: 1000, y: 1250}, hole: {x: 1400, y: 1100}, par: 5, obstacles: [
+                {x: 1100, y: 1200, width: 80, height: 120, type: 'tree'},
+                {x: 1250, y: 1150, width: 180, height: 80, type: 'bunker'}
             ]},
-            { id: 4, tee: {x: 1200, y: 1200}, hole: {x: 1400, y: 1000}, par: 4, obstacles: [
-                {x: 1300, y: 1100, width: 80, height: 80, type: 'water'},
-                {x: 1350, y: 1050, width: 30, height: 60, type: 'tree'}
+            { id: 4, tee: {x: 1500, y: 1050}, hole: {x: 1800, y: 800}, par: 4, obstacles: [
+                {x: 1600, y: 950, width: 100, height: 100, type: 'water'},
+                {x: 1750, y: 850, width: 50, height: 80, type: 'tree'}
             ]},
-            { id: 5, tee: {x: 1500, y: 1000}, hole: {x: 1700, y: 800}, par: 3, obstacles: [
-                {x: 1600, y: 900, width: 60, height: 60, type: 'bunker'}
+            { id: 5, tee: {x: 1900, y: 750}, hole: {x: 2200, y: 500}, par: 3, obstacles: [
+                {x: 2000, y: 625, width: 100, height: 80, type: 'bunker'}
             ]},
-            { id: 6, tee: {x: 1800, y: 800}, hole: {x: 2100, y: 600}, par: 4, obstacles: [
-                {x: 1900, y: 700, width: 100, height: 100, type: 'water'},
-                {x: 2000, y: 650, width: 40, height: 80, type: 'tree'}
+            { id: 6, tee: {x: 2300, y: 450}, hole: {x: 2600, y: 200}, par: 4, obstacles: [
+                {x: 2400, y: 350, width: 150, height: 120, type: 'water'},
+                {x: 2550, y: 250, width: 60, height: 100, type: 'tree'}
             ]},
-            { id: 7, tee: {x: 2200, y: 600}, hole: {x: 2500, y: 400}, par: 5, obstacles: [
-                {x: 2300, y: 500, width: 80, height: 120, type: 'bunker'},
-                {x: 2400, y: 450, width: 60, height: 60, type: 'tree'},
-                {x: 2450, y: 425, width: 100, height: 50, type: 'water'}
+            { id: 7, tee: {x: 2700, y: 150}, hole: {x: 2700, y: 450}, par: 5, obstacles: [
+                {x: 2650, y: 250, width: 80, height: 150, type: 'tree'},
+                {x: 2750, y: 350, width: 120, height: 80, type: 'bunker'}
             ]},
-            { id: 8, tee: {x: 2600, y: 400}, hole: {x: 2800, y: 200}, par: 3, obstacles: [
-                {x: 2700, y: 300, width: 60, height: 80, type: 'tree'}
+            { id: 8, tee: {x: 2600, y: 550}, hole: {x: 2300, y: 800}, par: 4, obstacles: [
+                {x: 2500, y: 650, width: 100, height: 120, type: 'water'},
+                {x: 2350, y: 750, width: 70, height: 90, type: 'tree'}
             ]},
-            { id: 9, tee: {x: 2700, y: 200}, hole: {x: 2500, y: 100}, par: 4, obstacles: [
-                {x: 2600, y: 150, width: 80, height: 60, type: 'bunker'},
-                {x: 2550, y: 125, width: 40, height: 50, type: 'tree'}
+            { id: 9, tee: {x: 2200, y: 900}, hole: {x: 1900, y: 1150}, par: 3, obstacles: [
+                {x: 2050, y: 1025, width: 120, height: 100, type: 'bunker'}
             ]},
             
-            // Back 9
-            { id: 10, tee: {x: 2400, y: 100}, hole: {x: 2100, y: 200}, par: 4, obstacles: [
-                {x: 2250, y: 150, width: 100, height: 60, type: 'water'}
+            // Back 9 - Counter-clockwise back to clubhouse
+            { id: 10, tee: {x: 1800, y: 1200}, hole: {x: 1500, y: 1450}, par: 4, obstacles: [
+                {x: 1700, y: 1300, width: 100, height: 80, type: 'water'},
+                {x: 1550, y: 1400, width: 60, height: 100, type: 'tree'}
             ]},
-            { id: 11, tee: {x: 2000, y: 200}, hole: {x: 1700, y: 300}, par: 3, obstacles: [
-                {x: 1850, y: 250, width: 60, height: 60, type: 'bunker'}
+            { id: 11, tee: {x: 1400, y: 1500}, hole: {x: 1100, y: 1700}, par: 3, obstacles: [
+                {x: 1250, y: 1600, width: 80, height: 120, type: 'bunker'}
             ]},
-            { id: 12, tee: {x: 1600, y: 300}, hole: {x: 1300, y: 500}, par: 5, obstacles: [
-                {x: 1500, y: 400, width: 80, height: 80, type: 'tree'},
-                {x: 1400, y: 450, width: 120, height: 60, type: 'water'},
-                {x: 1350, y: 475, width: 40, height: 60, type: 'tree'}
+            { id: 12, tee: {x: 1000, y: 1750}, hole: {x: 700, y: 1900}, par: 5, obstacles: [
+                {x: 900, y: 1800, width: 120, height: 60, type: 'water'},
+                {x: 800, y: 1850, width: 80, height: 100, type: 'tree'},
+                {x: 750, y: 1875, width: 150, height: 80, type: 'bunker'}
             ]},
-            { id: 13, tee: {x: 1200, y: 500}, hole: {x: 900, y: 700}, par: 4, obstacles: [
-                {x: 1050, y: 600, width: 80, height: 100, type: 'bunker'}
+            { id: 13, tee: {x: 600, y: 1850}, hole: {x: 300, y: 1700}, par: 4, obstacles: [
+                {x: 500, y: 1800, width: 100, height: 100, type: 'bunker'},
+                {x: 350, y: 1750, width: 60, height: 80, type: 'tree'}
             ]},
-            { id: 14, tee: {x: 800, y: 700}, hole: {x: 500, y: 900}, par: 3, obstacles: [
-                {x: 650, y: 800, width: 60, height: 60, type: 'tree'}
+            { id: 14, tee: {x: 200, y: 1650}, hole: {x: 150, y: 1350}, par: 3, obstacles: [
+                {x: 175, y: 1500, width: 120, height: 80, type: 'water'}
             ]},
-            { id: 15, tee: {x: 400, y: 900}, hole: {x: 600, y: 1200}, par: 4, obstacles: [
-                {x: 500, y: 1000, width: 100, height: 80, type: 'water'},
-                {x: 550, y: 1150, width: 40, height: 80, type: 'tree'}
+            { id: 15, tee: {x: 100, y: 1300}, hole: {x: 300, y: 1000}, par: 5, obstacles: [
+                {x: 150, y: 1200, width: 80, height: 100, type: 'tree'},
+                {x: 250, y: 1100, width: 140, height: 70, type: 'bunker'}
             ]},
-            { id: 16, tee: {x: 700, y: 1200}, hole: {x: 1000, y: 1500}, par: 5, obstacles: [
-                {x: 800, y: 1300, width: 80, height: 120, type: 'bunker'},
-                {x: 900, y: 1400, width: 60, height: 80, type: 'tree'},
-                {x: 950, y: 1450, width: 100, height: 60, type: 'water'}
+            { id: 16, tee: {x: 400, y: 950}, hole: {x: 700, y: 750}, par: 4, obstacles: [
+                {x: 500, y: 875, width: 100, height: 80, type: 'water'},
+                {x: 650, y: 800, width: 50, height: 90, type: 'tree'}
             ]},
-            { id: 17, tee: {x: 1100, y: 1500}, hole: {x: 1400, y: 1700}, par: 3, obstacles: [
-                {x: 1250, y: 1600, width: 80, height: 60, type: 'bunker'}
+            { id: 17, tee: {x: 800, y: 700}, hole: {x: 1100, y: 500}, par: 3, obstacles: [
+                {x: 950, y: 600, width: 120, height: 80, type: 'bunker'}
             ]},
-            { id: 18, tee: {x: 1500, y: 1700}, hole: {x: 300, y: 1800}, par: 4, obstacles: [
-                {x: 900, y: 1750, width: 400, height: 40, type: 'water'},
-                {x: 700, y: 1775, width: 40, height: 60, type: 'tree'},
-                {x: 500, y: 1780, width: 60, height: 40, type: 'bunker'}
+            { id: 18, tee: {x: 1200, y: 450}, hole: {x: 800, y: 200}, par: 4, obstacles: [
+                {x: 1000, y: 350, width: 200, height: 60, type: 'water'},
+                {x: 900, y: 275, width: 60, height: 80, type: 'tree'},
+                {x: 850, y: 225, width: 100, height: 60, type: 'bunker'}
             ]}
         ];
         
