@@ -334,3 +334,73 @@ button:disabled {
         height: 100%;
     }
 }
+
+/* Course Designer Styles */
+.course-designer {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+    border-radius: 10px;
+    border: 2px solid #654321;
+}
+
+.course-designer h3 {
+    color: #FFFFFF;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.designer-info {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.designer-info p {
+    color: #FFFFFF;
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.designer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.designer-controls button {
+    padding: 8px 12px;
+    font-size: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: white;
+    font-weight: bold;
+}
+
+.designer-controls button:nth-child(1) {
+    background: linear-gradient(135deg, #DC143C 0%, #B22222 100%);
+}
+
+.designer-controls button:nth-child(2) {
+    background: linear-gradient(135deg, #4169E1 0%, #1E90FF 100%);
+}
+
+.designer-controls button:nth-child(3) {
+    background: linear-gradient(135deg, #FF8C00 0%, #FF7F50 100%);
+}
+
+.designer-controls button:nth-child(4) {
+    background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
+}
+
+.designer-controls button:nth-child(5) {
+    background: linear-gradient(135deg, #696969 0%, #2F4F4F 100%);
+}
+
+.designer-controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
