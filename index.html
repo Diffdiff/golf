@@ -47,68 +47,69 @@
                 </div>
                 
                 <div class="course-designer" id="course-designer" style="display: block;">
-                    <h3>🏌️ Golf Course Designer</h3>
-                    <div class="designer-info">
-                        <p><strong>Design each hole from scratch!</strong></p>
-                        <p>Selected Hole: <span id="selected-hole">Hole 1</span></p>
+                    <h3>�️ Grid Course Designer</h3>
+                    
+                    <div class="designer-info" style="margin: 10px 0;">
+                        <p><strong id="current-hole-display">Designing Hole 1</strong></p>
+                        <div class="hole-selector" style="margin: 10px 0;">
+                            <label><strong>Current Hole:</strong></label>
+                            <select onchange="game.setCurrentHole(this.value)">
+                                <option value="1">Hole 1</option>
+                                <option value="2">Hole 2</option>
+                                <option value="3">Hole 3</option>
+                                <option value="4">Hole 4</option>
+                                <option value="5">Hole 5</option>
+                                <option value="6">Hole 6</option>
+                                <option value="7">Hole 7</option>
+                                <option value="8">Hole 8</option>
+                                <option value="9">Hole 9</option>
+                                <option value="10">Hole 10</option>
+                                <option value="11">Hole 11</option>
+                                <option value="12">Hole 12</option>
+                                <option value="13">Hole 13</option>
+                                <option value="14">Hole 14</option>
+                                <option value="15">Hole 15</option>
+                                <option value="16">Hole 16</option>
+                                <option value="17">Hole 17</option>
+                                <option value="18">Hole 18</option>
+                            </select>
+                        </div>
+                        
+                        <div class="par-selector" style="margin: 10px 0;">
+                            <label><strong>Par:</strong></label>
+                            <select onchange="game.setHolePar(this.value)">
+                                <option value="3">Par 3</option>
+                                <option value="4" selected>Par 4</option>
+                                <option value="5">Par 5</option>
+                            </select>
+                        </div>
                     </div>
                     
-                    <div class="hole-selector" style="margin: 10px 0;">
-                        <label><strong>Designing:</strong></label>
-                        <select id="hole-selector" onchange="game.selectHoleForDesign(this.value)">
-                            <option value="0">Hole 1</option>
-                            <option value="1">Hole 2</option>
-                            <option value="2">Hole 3</option>
-                            <option value="3">Hole 4</option>
-                            <option value="4">Hole 5</option>
-                            <option value="5">Hole 6</option>
-                            <option value="6">Hole 7</option>
-                            <option value="7">Hole 8</option>
-                            <option value="8">Hole 9</option>
-                            <option value="9">Hole 10</option>
-                            <option value="10">Hole 11</option>
-                            <option value="11">Hole 12</option>
-                            <option value="12">Hole 13</option>
-                            <option value="13">Hole 14</option>
-                            <option value="14">Hole 15</option>
-                            <option value="15">Hole 16</option>
-                            <option value="16">Hole 17</option>
-                            <option value="17">Hole 18</option>
-                        </select>
+                    <div class="grid-tools" style="margin: 10px 0;">
+                        <p><strong>🎨 Paint Tools:</strong></p>
+                        <button onclick="game.setTool('fairway')" style="background: #32CD32; margin: 2px; border: 2px solid #333;">Fairway</button>
+                        <button onclick="game.setTool('green')" style="background: #90EE90; margin: 2px; border: 2px solid transparent;">Green</button>
+                        <button onclick="game.setTool('sand')" style="background: #D4AF37; margin: 2px; border: 2px solid transparent;">Sand</button>
+                        <button onclick="game.setTool('water')" style="background: #1565C0; color: white; margin: 2px; border: 2px solid transparent;">Water</button>
+                        <button onclick="game.setTool('trees')" style="background: #1B5E20; color: white; margin: 2px; border: 2px solid transparent;">Trees</button>
+                        <button onclick="game.setTool('rough')" style="background: #228B22; color: white; margin: 2px; border: 2px solid transparent;">Rough</button>
+                        
+                        <p><strong>🏌️ Hole Elements:</strong></p>
+                        <button onclick="game.setTool('tee')" style="background: #4169E1; color: white; margin: 2px; border: 2px solid transparent;">Place Tee</button>
+                        <button onclick="game.setTool('hole')" style="background: #FFD700; margin: 2px; border: 2px solid transparent;">Place Hole</button>
+                        
+                        <p><strong>🔧 Tools:</strong></p>
+                        <button onclick="game.clearGrid()" style="background: #f44336; color: white; margin: 2px;">Clear All</button>
                     </div>
                     
-                    <div class="par-selector" style="margin: 10px 0;">
-                        <label><strong>Par:</strong></label>
-                        <select id="par-selector" onchange="game.changeCurrentHolePar(this.value)">
-                            <option value="3">Par 3</option>
-                            <option value="4" selected>Par 4</option>
-                            <option value="5">Par 5</option>
-                        </select>
-                    </div>
-                    
-                    <div style="margin: 10px 0; font-size: 12px;">
+                    <div style="font-size: 12px; margin: 10px 0;">
                         <p><strong>Instructions:</strong></p>
                         <ul style="margin: 5px 0 5px 20px;">
-                            <li>🔵 Click blue TEE to move it</li>
-                            <li>🟢 Click green HOLE to move it</li>
-                            <li>🚫 Click obstacles to delete</li>
-                            <li>Click empty space to add obstacles</li>
+                            <li>Select a tool, then click/drag to paint</li>
+                            <li>Each square is paintable terrain</li>
+                            <li>Place ONE tee and ONE hole per course hole</li>
+                            <li>Use mouse wheel to zoom</li>
                         </ul>
-                    </div>
-                    
-                    <div class="designer-controls">
-                        <p><strong>Add Obstacles:</strong></p>
-                        <button onclick="game.setObstacleMode('bunker')" style="background: #D4AF37; margin: 2px;">🏖️ Sand</button>
-                        <button onclick="game.setObstacleMode('water')" style="background: #1565C0; color: white; margin: 2px;">💧 Water</button>
-                        <button onclick="game.setObstacleMode('tree')" style="background: #1B5E20; color: white; margin: 2px;">🌳 Trees</button>
-                        <br>
-                        <button id="clear-fairway" onclick="game.clearCurrentHole()" style="background: #f44336; color: white; margin: 5px 0;">Clear Hole</button>
-                        <br>
-                        <p><strong>Fairway Presets:</strong></p>
-                        <button id="preset-straight" onclick="game.applyPreset('straight')" style="background: #4CAF50; margin: 2px;">Straight</button>
-                        <button id="preset-dogleg-left" onclick="game.applyPreset('dogleg-left')" style="background: #FF9800; margin: 2px;">↙️ Left</button>
-                        <button id="preset-dogleg-right" onclick="game.applyPreset('dogleg-right')" style="background: #2196F3; color: white; margin: 2px;">↘️ Right</button>
-                        <button id="preset-s-curve" onclick="game.applyPreset('s-curve')" style="background: #9C27B0; color: white; margin: 2px;">〰️ S-Curve</button>
                     </div>
                 </div>
                 

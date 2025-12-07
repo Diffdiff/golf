@@ -9,11 +9,6 @@ class GolfCoursePlanner {
         this.messages = document.getElementById('messages');
         this.scoreboardContent = document.getElementById('scoreboard-content');
         
-        // Check if elements exist
-        if (!this.addPlayerBtn) {
-            console.error('Add player button not found!');
-        }
-        
         // Game state
         this.players = [];
         this.currentPlayerIndex = 0;
@@ -21,18 +16,200 @@ class GolfCoursePlanner {
         this.courseWidth = 3000;
         this.courseHeight = 2000;
         this.gameActive = false;
-        this.turnDelay = 2000; // 2 seconds between shots
+        this.turnDelay = 2000;
         this.lastShotTime = 0;
         
-        // Course layout
-        this.setupCourse();
+        // Grid system for design
+        this.gridSize = 50; // Each grid cell is 50x50 pixels
+        this.gridWidth = Math.ceil(this.courseWidth / this.gridSize);
+        this.gridHeight = Math.ceil(this.courseHeight / this.gridSize);
+        this.grid = [];
+        
+        // Design mode
+        this.designMode = true;
+        this.selectedTool = 'fairway'; // Current painting tool
+        this.isPainting = false;
+        
+        // Initialize grid
+        this.initializeGrid();
         this.setupEventListeners();
-        this.centerView(); // Initialize with proper view
+        this.centerView();
         this.updateCanvas();
         this.gameLoop();
     }
     
-    setupCourse() {
+    initializeGrid() {
+        // Create empty grid filled with 'rough' (basic grass)
+        this.grid = [];
+        for (let y = 0; y < this.gridHeight; y++) {
+            this.grid[y] = [];
+            for (let x = 0; x < this.gridWidth; x++) {
+                this.grid[y][x] = 'rough'; // Default terrain
+            }
+        }
+        
+        // Create basic holes data structure for gameplay
+        this.holes = [];
+        for (let i = 1; i <= 18; i++) {
+            this.holes.push({
+                id: i,
+                teePosition: null, // Will be set when user places tees
+                holePosition: null, // Will be set when user places holes
+                par: 4
+            });
+        }
+        
+    
+    setTool(toolType) {
+        this.selectedTool = toolType;
+        console.log(`Selected tool: ${toolType}`);
+        
+        // Update button appearance
+        document.querySelectorAll('[onclick*="setTool"]').forEach(btn => {
+            btn.style.border = '2px solid transparent';
+        });
+        const activeBtn = document.querySelector(`[onclick="game.setTool('${toolType}')"]`);
+        if (activeBtn) {
+            activeBtn.style.border = '2px solid #333';
+        }
+    }
+    
+    setCurrentHole(holeNumber) {
+        this.currentHole = parseInt(holeNumber);
+        document.getElementById('current-hole-display').textContent = `Designing Hole ${this.currentHole}`;
+    }
+    
+    setHolePar(par) {
+        if (this.currentHole >= 1 && this.currentHole <= 18) {
+            this.holes[this.currentHole - 1].par = parseInt(par);
+            console.log(`Hole ${this.currentHole} par set to ${par}`);
+        }
+    }
+    
+    getGridPosition(worldX, worldY) {
+        const gridX = Math.floor(worldX / this.gridSize);
+        const gridY = Math.floor(worldY / this.gridSize);
+        return { gridX, gridY };
+    }
+    
+    isValidGridPosition(gridX, gridY) {
+        return gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight;
+    }
+    
+    paintGridCell(gridX, gridY, terrainType) {
+        if (this.isValidGridPosition(gridX, gridY)) {
+            // Special handling for tees and holes
+            if (terrainType === 'tee') {
+                this.holes[this.currentHole - 1].teePosition = { gridX, gridY };
+                terrainType = 'tee_' + this.currentHole;
+            } else if (terrainType === 'hole') {
+                this.holes[this.currentHole - 1].holePosition = { gridX, gridY };
+                terrainType = 'hole_' + this.currentHole;
+            }
+            
+            this.grid[gridY][gridX] = terrainType;
+            this.updateCanvas();
+        }
+    }
+    
+    clearGrid() {
+        for (let y = 0; y < this.gridHeight; y++) {
+            for (let x = 0; x < this.gridWidth; x++) {
+                this.grid[y][x] = 'rough';
+            }
+        }
+        // Reset hole positions
+        this.holes.forEach(hole => {
+            hole.teePosition = null;
+            hole.holePosition = null;
+        });
+        this.updateCanvas();
+    }
+    
+    draw() {
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Apply camera transform
+        this.ctx.save();
+        this.ctx.scale(this.camera.scale, this.camera.scale);
+        this.ctx.translate(-this.camera.x, -this.camera.y);
+        
+        // Draw grid-based terrain
+        this.drawGrid();
+        
+        // Draw all players
+        this.players.forEach(player => {
+            this.drawPlayer(player);
+        });
+        
+        this.ctx.restore();
+    }
+    
+    drawGrid() {
+        for (let y = 0; y < this.gridHeight; y++) {
+            for (let x = 0; x < this.gridWidth; x++) {
+                const terrain = this.grid[y][x];
+                const worldX = x * this.gridSize;
+                const worldY = y * this.gridSize;
+                
+                // Set color based on terrain type
+                switch(terrain) {
+                    case 'rough':
+                        this.ctx.fillStyle = '#228B22'; // Forest Green
+                        break;
+                    case 'fairway':
+                        this.ctx.fillStyle = '#32CD32'; // Lime Green
+                        break;
+                    case 'green':
+                        this.ctx.fillStyle = '#90EE90'; // Light Green
+                        break;
+                    case 'sand':
+                        this.ctx.fillStyle = '#D4AF37'; // Gold
+                        break;
+                    case 'water':
+                        this.ctx.fillStyle = '#1565C0'; // Blue
+                        break;
+                    case 'trees':
+                        this.ctx.fillStyle = '#1B5E20'; // Dark Green
+                        break;
+                    default:
+                        // Handle tee and hole positions
+                        if (terrain.startsWith('tee_')) {
+                            this.ctx.fillStyle = '#4169E1'; // Royal Blue
+                        } else if (terrain.startsWith('hole_')) {
+                            this.ctx.fillStyle = '#FFD700'; // Gold
+                        } else {
+                            this.ctx.fillStyle = '#228B22'; // Default rough
+                        }
+                        break;
+                }
+                
+                // Draw the grid cell
+                this.ctx.fillRect(worldX, worldY, this.gridSize, this.gridSize);
+                
+                // Draw grid lines in design mode
+                if (this.designMode) {
+                    this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    this.ctx.lineWidth = 1;
+                    this.ctx.strokeRect(worldX, worldY, this.gridSize, this.gridSize);
+                }
+                
+                // Draw hole numbers on tees and holes
+                if (terrain.startsWith('tee_') || terrain.startsWith('hole_')) {
+                    const holeNumber = terrain.split('_')[1];
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = 'bold 20px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(
+                        holeNumber,
+                        worldX + this.gridSize / 2,
+                        worldY + this.gridSize / 2 + 7
+                    );
+                }
+            }
+        }
+    }
         // Start with empty holes - user will design each one!
         this.holes = [];
         
@@ -80,18 +257,87 @@ class GolfCoursePlanner {
         if (this.selectedHoleIndex >= 0) {
             this.holes[this.selectedHoleIndex].par = parseInt(newPar);
             this.totalPar = this.holes.reduce((sum, hole) => sum + hole.par, 0);
+            console.log(`Hole ${this.selectedHoleIndex + 1} par changed to ${newPar}`);
         }
     }
     
     setObstacleMode(type) {
         this.obstacleMode = type;
         console.log(`Obstacle mode set to: ${type}`);
+        // Update button appearance
+        document.querySelectorAll('[onclick*="setObstacleMode"]').forEach(btn => {
+            btn.style.border = '2px solid transparent';
+        });
+        document.querySelector(`[onclick="game.setObstacleMode('${type}')"]`).style.border = '2px solid #333';
     }
     
     clearCurrentHole() {
         if (this.selectedHoleIndex >= 0) {
             this.holes[this.selectedHoleIndex].obstacles = [];
+            console.log(`Cleared hole ${this.selectedHoleIndex + 1}`);
             this.updateCanvas();
+        }
+    }
+    
+    applyPreset(presetType) {
+        if (this.selectedHoleIndex >= 0) {
+            const hole = this.holes[this.selectedHoleIndex];
+            hole.customFairway = this.createFairwayPath(hole.tee, hole.hole, presetType);
+            console.log(`Applied ${presetType} preset to hole ${this.selectedHoleIndex + 1}`);
+            this.updateCanvas();
+        }
+    }
+    
+    createFairwayPath(tee, hole, type) {
+        const dx = hole.x - tee.x;
+        const dy = hole.y - tee.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        switch(type) {
+            case 'straight':
+                return [
+                    { x: tee.x, y: tee.y },
+                    { x: hole.x, y: hole.y }
+                ];
+                
+            case 'dogleg-right':
+                const bend1x = tee.x + dx * 0.6;
+                const bend1y = tee.y + dy * 0.4;
+                const bend2x = tee.x + dx * 0.7 + 100;
+                const bend2y = tee.y + dy * 0.6;
+                return [
+                    { x: tee.x, y: tee.y },
+                    { x: bend1x, y: bend1y },
+                    { x: bend2x, y: bend2y },
+                    { x: hole.x, y: hole.y }
+                ];
+                
+            case 'dogleg-left':
+                const bendL1x = tee.x + dx * 0.6;
+                const bendL1y = tee.y + dy * 0.4;
+                const bendL2x = tee.x + dx * 0.7 - 100;
+                const bendL2y = tee.y + dy * 0.6;
+                return [
+                    { x: tee.x, y: tee.y },
+                    { x: bendL1x, y: bendL1y },
+                    { x: bendL2x, y: bendL2y },
+                    { x: hole.x, y: hole.y }
+                ];
+                
+            case 's-curve':
+                const third = distance / 3;
+                return [
+                    { x: tee.x, y: tee.y },
+                    { x: tee.x + dx * 0.3 + 80, y: tee.y + dy * 0.3 },
+                    { x: tee.x + dx * 0.6 - 80, y: tee.y + dy * 0.6 },
+                    { x: hole.x, y: hole.y }
+                ];
+                
+            default:
+                return [
+                    { x: tee.x, y: tee.y },
+                    { x: hole.x, y: hole.y }
+                ];
         }
     }
     
@@ -349,47 +595,14 @@ class GolfCoursePlanner {
         
         this.canvas.addEventListener('mousedown', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left - this.camera.x) / this.camera.scale;
-            const y = (e.clientY - rect.top - this.camera.y) / this.camera.scale;
+            const worldX = (e.clientX - rect.left - this.camera.x) / this.camera.scale;
+            const worldY = (e.clientY - rect.top - this.camera.y) / this.camera.scale;
             
-            if (this.designMode && this.selectedHoleIndex >= 0) {
-                // In design mode, handle hole editing
-                const selectedHole = this.holes[this.selectedHoleIndex];
-                
-                // Check if clicking on tee
-                const teeDistance = Math.sqrt((x - selectedHole.tee.x) ** 2 + (y - selectedHole.tee.y) ** 2);
-                if (teeDistance < 30) {
-                    this.isDraggingTee = true;
-                    return;
-                }
-                
-                // Check if clicking on hole
-                const holeDistance = Math.sqrt((x - selectedHole.hole.x) ** 2 + (y - selectedHole.hole.y) ** 2);
-                if (holeDistance < 30) {
-                    this.isDraggingHole = true;
-                    return;
-                }
-                
-                // Check if clicking on obstacle to delete it
-                for (let i = selectedHole.obstacles.length - 1; i >= 0; i--) {
-                    const obstacle = selectedHole.obstacles[i];
-                    if (x >= obstacle.x && x <= obstacle.x + obstacle.width &&
-                        y >= obstacle.y && y <= obstacle.y + obstacle.height) {
-                        selectedHole.obstacles.splice(i, 1);
-                        this.updateCanvas();
-                        return;
-                    }
-                }
-                
-                // Add new obstacle at click location
-                selectedHole.obstacles.push({
-                    x: x - 50,
-                    y: y - 40,
-                    width: 100,
-                    height: 80,
-                    type: this.obstacleMode
-                });
-                this.updateCanvas();
+            if (this.designMode) {
+                // Paint grid cells
+                const { gridX, gridY } = this.getGridPosition(worldX, worldY);
+                this.paintGridCell(gridX, gridY, this.selectedTool);
+                this.isPainting = true;
             } else {
                 // Normal camera movement
                 isPanning = true;
@@ -403,29 +616,17 @@ class GolfCoursePlanner {
         
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left - this.camera.x) / this.camera.scale;
-            const y = (e.clientY - rect.top - this.camera.y) / this.camera.scale;
+            const worldX = (e.clientX - rect.left - this.camera.x) / this.camera.scale;
+            const worldY = (e.clientY - rect.top - this.camera.y) / this.camera.scale;
             
-            if (this.designMode && this.selectedHoleIndex >= 0) {
-                // Handle dragging tee or hole
-                if (this.isDraggingTee) {
-                    this.holes[this.selectedHoleIndex].tee.x = x;
-                    this.holes[this.selectedHoleIndex].tee.y = y;
-                    this.updateCanvas();
-                    return;
-                } else if (this.isDraggingHole) {
-                    this.holes[this.selectedHoleIndex].hole.x = x;
-                    this.holes[this.selectedHoleIndex].hole.y = y;
-                    this.updateCanvas();
-                    return;
-                }
-            }
-            
-            if (isPanning) {
+            if (this.designMode && this.isPainting) {
+                // Continue painting while dragging
+                const { gridX, gridY } = this.getGridPosition(worldX, worldY);
+                this.paintGridCell(gridX, gridY, this.selectedTool);
+            } else if (isPanning) {
                 const deltaX = e.clientX - lastPanX;
                 const deltaY = e.clientY - lastPanY;
                 
-                // Only start panning after a small movement threshold
                 if (!hasMoved && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3)) {
                     hasMoved = true;
                 }
@@ -433,30 +634,18 @@ class GolfCoursePlanner {
                 if (hasMoved) {
                     this.camera.x -= deltaX / this.camera.scale;
                     this.camera.y -= deltaY / this.camera.scale;
-                    
-                    // Constrain camera to reasonable bounds
                     this.constrainCamera();
-                    
                     lastPanX = e.clientX;
                     lastPanY = e.clientY;
-                    
                     this.updateCanvas();
                 }
-            } else {
-                // Show grab cursor when hovering
-                this.canvas.style.cursor = 'grab';
             }
         });
         
         this.canvas.addEventListener('mouseup', (e) => {
-            if (this.designMode) {
-                // Stop dragging
-                this.isDraggingTee = false;
-                this.isDraggingHole = false;
-            }
-            
+            this.isPainting = false;
             isPanning = false;
-            this.canvas.style.cursor = 'grab';
+            this.canvas.style.cursor = this.designMode ? 'crosshair' : 'grab';
         });
         
         this.canvas.addEventListener('mouseleave', () => {
@@ -1619,10 +1808,61 @@ class GolfCoursePlanner {
     }
 }
 
+// Add the missing methods for the grid designer
+GolfCoursePlanner.prototype.setTool = function(toolType) {
+    this.selectedTool = toolType;
+    console.log(`Selected tool: ${toolType}`);
+    
+    // Update button appearance
+    document.querySelectorAll('button[onclick*="setTool"]').forEach(btn => {
+        btn.style.border = '2px solid transparent';
+    });
+    const activeBtn = document.querySelector(`button[onclick="game.setTool('${toolType}')"]`);
+    if (activeBtn) {
+        activeBtn.style.border = '2px solid #333';
+    }
+};
+
+GolfCoursePlanner.prototype.setCurrentHole = function(holeNumber) {
+    this.currentHole = parseInt(holeNumber);
+    document.getElementById('current-hole-display').textContent = `Designing Hole ${this.currentHole}`;
+    console.log(`Now designing hole ${this.currentHole}`);
+};
+
+GolfCoursePlanner.prototype.setHolePar = function(par) {
+    if (this.currentHole >= 1 && this.currentHole <= 18) {
+        this.holes[this.currentHole - 1].par = parseInt(par);
+        console.log(`Hole ${this.currentHole} par set to ${par}`);
+    }
+};
+
+GolfCoursePlanner.prototype.clearGrid = function() {
+    console.log('Clearing entire grid...');
+    for (let y = 0; y < this.gridHeight; y++) {
+        for (let x = 0; x < this.gridWidth; x++) {
+            this.grid[y][x] = 'rough';
+        }
+    }
+    // Reset hole positions
+    this.holes.forEach(hole => {
+        hole.teePosition = null;
+        hole.holePosition = null;
+    });
+    this.updateCanvas();
+};
+
 // Global reference for button clicks
-let golfGame;
+let game;
 
 // Start the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    golfGame = new GolfCoursePlanner();
+    game = new GolfCoursePlanner();
+    window.game = game; // Make available globally for HTML onclick handlers
+    
+    // Set default tool
+    setTimeout(() => {
+        if (game.setTool) {
+            game.setTool('fairway');
+        }
+    }, 100);
 });
