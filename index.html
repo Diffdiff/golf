@@ -46,22 +46,69 @@
                     <button id="design-mode">Design Course</button>
                 </div>
                 
-                <div class="course-designer" id="course-designer" style="display: none;">
-                    <h3>Course Designer</h3>
+                <div class="course-designer" id="course-designer" style="display: block;">
+                    <h3>🏌️ Golf Course Designer</h3>
                     <div class="designer-info">
-                        <p>Selected Hole: <span id="selected-hole">None</span></p>
-                        <p>Click on a hole to select it, then choose a design</p>
+                        <p><strong>Design each hole from scratch!</strong></p>
+                        <p>Selected Hole: <span id="selected-hole">Hole 1</span></p>
                     </div>
+                    
+                    <div class="hole-selector" style="margin: 10px 0;">
+                        <label><strong>Designing:</strong></label>
+                        <select id="hole-selector" onchange="game.selectHoleForDesign(this.value)">
+                            <option value="0">Hole 1</option>
+                            <option value="1">Hole 2</option>
+                            <option value="2">Hole 3</option>
+                            <option value="3">Hole 4</option>
+                            <option value="4">Hole 5</option>
+                            <option value="5">Hole 6</option>
+                            <option value="6">Hole 7</option>
+                            <option value="7">Hole 8</option>
+                            <option value="8">Hole 9</option>
+                            <option value="9">Hole 10</option>
+                            <option value="10">Hole 11</option>
+                            <option value="11">Hole 12</option>
+                            <option value="12">Hole 13</option>
+                            <option value="13">Hole 14</option>
+                            <option value="14">Hole 15</option>
+                            <option value="15">Hole 16</option>
+                            <option value="16">Hole 17</option>
+                            <option value="17">Hole 18</option>
+                        </select>
+                    </div>
+                    
+                    <div class="par-selector" style="margin: 10px 0;">
+                        <label><strong>Par:</strong></label>
+                        <select id="par-selector" onchange="game.changeCurrentHolePar(this.value)">
+                            <option value="3">Par 3</option>
+                            <option value="4" selected>Par 4</option>
+                            <option value="5">Par 5</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin: 10px 0; font-size: 12px;">
+                        <p><strong>Instructions:</strong></p>
+                        <ul style="margin: 5px 0 5px 20px;">
+                            <li>🔵 Click blue TEE to move it</li>
+                            <li>🟢 Click green HOLE to move it</li>
+                            <li>🚫 Click obstacles to delete</li>
+                            <li>Click empty space to add obstacles</li>
+                        </ul>
+                    </div>
+                    
                     <div class="designer-controls">
-                        <button id="clear-fairway">Clear Fairway</button>
-                        <button id="preset-straight">Straight</button>
-                        <button id="preset-dogleg-left">Dogleg Left</button>
-                        <button id="preset-dogleg-right">Dogleg Right</button>
-                        <button id="preset-s-curve">S-Curve</button>
-                        <button id="preset-sharp-left">Sharp Left</button>
-                        <button id="preset-sharp-right">Sharp Right</button>
-                        <button id="preset-u-turn">U-Turn</button>
-                        <button id="exit-designer">Exit Designer</button>
+                        <p><strong>Add Obstacles:</strong></p>
+                        <button onclick="game.setObstacleMode('bunker')" style="background: #D4AF37; margin: 2px;">🏖️ Sand</button>
+                        <button onclick="game.setObstacleMode('water')" style="background: #1565C0; color: white; margin: 2px;">💧 Water</button>
+                        <button onclick="game.setObstacleMode('tree')" style="background: #1B5E20; color: white; margin: 2px;">🌳 Trees</button>
+                        <br>
+                        <button id="clear-fairway" onclick="game.clearCurrentHole()" style="background: #f44336; color: white; margin: 5px 0;">Clear Hole</button>
+                        <br>
+                        <p><strong>Fairway Presets:</strong></p>
+                        <button id="preset-straight" onclick="game.applyPreset('straight')" style="background: #4CAF50; margin: 2px;">Straight</button>
+                        <button id="preset-dogleg-left" onclick="game.applyPreset('dogleg-left')" style="background: #FF9800; margin: 2px;">↙️ Left</button>
+                        <button id="preset-dogleg-right" onclick="game.applyPreset('dogleg-right')" style="background: #2196F3; color: white; margin: 2px;">↘️ Right</button>
+                        <button id="preset-s-curve" onclick="game.applyPreset('s-curve')" style="background: #9C27B0; color: white; margin: 2px;">〰️ S-Curve</button>
                     </div>
                 </div>
                 

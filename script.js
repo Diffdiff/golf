@@ -33,80 +33,240 @@ class GolfCoursePlanner {
     }
     
     setupCourse() {
-        // Define 18 holes spread out like a real golf course - inspired by the image layout
-        this.holes = [
-            // Holes scattered naturally around the course area like the reference image
-            { id: 1, tee: {x: 1400, y: 1800}, hole: {x: 1400, y: 1400}, par: 4, obstacles: [
-                {x: 1350, y: 1600, width: 120, height: 80, type: 'bunker'},
-                {x: 1450, y: 1500, width: 60, height: 100, type: 'tree'}
+        // Start with empty holes - user will design each one!
+        this.holes = [];
+        
+        // Create 18 basic hole templates that user can customize
+        for (let i = 1; i <= 18; i++) {
+            this.holes.push({
+                id: i,
+                tee: { x: 200 + (i - 1) * 150, y: 200 + (Math.floor((i - 1) / 6) * 500) },
+                hole: { x: 300 + (i - 1) * 150, y: 400 + (Math.floor((i - 1) / 6) * 500) },
+                par: 4, // Default par, user can change
+                obstacles: [], // Start with no obstacles
+                customFairway: null // User can design custom fairway
+            });
+        }
+
+        // Add landscape features
+        this.landscapeFeatures = [
+            { x: 700, y: 700, width: 400, height: 200, type: 'water' },
+            { x: 1000, y: 650, width: 300, height: 150, type: 'water' },
+            { x: 50, y: 50, width: 200, height: 200, type: 'forest' },
+            { x: 2700, y: 50, width: 250, height: 200, type: 'forest' },
+            { x: 50, y: 1750, width: 200, height: 200, type: 'forest' },
+            { x: 2700, y: 1750, width: 250, height: 200, type: 'forest' }
+        ];
+
+        // Enable designer mode by default
+        this.designMode = true;
+        this.selectedHoleIndex = 0; // Start with hole 1 selected
+        this.obstacleMode = 'bunker'; // Current obstacle type to place
+        this.isDraggingTee = false;
+        this.isDraggingHole = false;
+        
+        // Calculate total par
+        this.totalPar = this.holes.reduce((sum, hole) => sum + hole.par, 0);
+    }
+    
+    selectHoleForDesign(holeIndex) {
+        this.selectedHoleIndex = parseInt(holeIndex);
+        document.getElementById('selected-hole').textContent = `Hole ${this.selectedHoleIndex + 1}`;
+        document.getElementById('par-selector').value = this.holes[this.selectedHoleIndex].par;
+        this.updateCanvas();
+    }
+    
+    changeCurrentHolePar(newPar) {
+        if (this.selectedHoleIndex >= 0) {
+            this.holes[this.selectedHoleIndex].par = parseInt(newPar);
+            this.totalPar = this.holes.reduce((sum, hole) => sum + hole.par, 0);
+        }
+    }
+    
+    setObstacleMode(type) {
+        this.obstacleMode = type;
+        console.log(`Obstacle mode set to: ${type}`);
+    }
+    
+    clearCurrentHole() {
+        if (this.selectedHoleIndex >= 0) {
+            this.holes[this.selectedHoleIndex].obstacles = [];
+            this.updateCanvas();
+        }
+    }
+    
+    // Function to check if two rectangles overlap
+    checkOverlap(rect1, rect2) {
+        return !(rect1.x + rect1.width < rect2.x || 
+                rect2.x + rect2.width < rect1.x || 
+                rect1.y + rect1.height < rect2.y || 
+                rect2.y + rect2.height < rect1.y);
+    }
+    
+    // Get the bounding box for a hole (including tee, fairway, and obstacles)
+    getHoleBounds(hole) {
+        const minX = Math.min(hole.tee.x, hole.hole.x) - 200; // Extra padding
+        const maxX = Math.max(hole.tee.x, hole.hole.x) + 200;
+        const minY = Math.min(hole.tee.y, hole.hole.y) - 200;
+        const maxY = Math.max(hole.tee.y, hole.hole.y) + 200;
+        
+        // Include obstacles in bounds
+        if (hole.obstacles) {
+            hole.obstacles.forEach(obstacle => {
+                const obsMinX = obstacle.x - 50;
+                const obsMaxX = obstacle.x + obstacle.width + 50;
+                const obsMinY = obstacle.y - 50;
+                const obsMaxY = obstacle.y + obstacle.height + 50;
+                
+                minX = Math.min(minX, obsMinX);
+                maxX = Math.max(maxX, obsMaxX);
+                minY = Math.min(minY, obsMinY);
+                maxY = Math.max(maxY, obsMaxY);
+            });
+        }
+        
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    }
+    
+    // Check if a hole overlaps with any existing holes
+    holeOverlapsWithExisting(newHole, existingHoles) {
+        const newBounds = this.getHoleBounds(newHole);
+        
+        for (let existingHole of existingHoles) {
+            const existingBounds = this.getHoleBounds(existingHole);
+            if (this.checkOverlap(newBounds, existingBounds)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    createNonOverlappingHoles() {
+        // Define hole templates with different configurations
+        const holeTemplates = [
+            // Template 1: Short par 4
+            { par: 4, length: 300, obstacles: [
+                {width: 120, height: 80, type: 'bunker'},
+                {width: 60, height: 100, type: 'tree'}
             ]},
-            { id: 2, tee: {x: 1600, y: 1350}, hole: {x: 2000, y: 1200}, par: 3, obstacles: [
-                {x: 1750, y: 1275, width: 150, height: 60, type: 'water'}
+            // Template 2: Par 3 over water
+            { par: 3, length: 200, obstacles: [
+                {width: 150, height: 60, type: 'water'}
             ]},
-            { id: 3, tee: {x: 2100, y: 1150}, hole: {x: 2500, y: 800}, par: 5, obstacles: [
-                {x: 2200, y: 1050, width: 80, height: 120, type: 'tree'},
-                {x: 2350, y: 950, width: 180, height: 80, type: 'bunker'}
+            // Template 3: Long par 5
+            { par: 5, length: 500, obstacles: [
+                {width: 80, height: 120, type: 'tree'},
+                {width: 180, height: 80, type: 'bunker'},
+                {width: 100, height: 100, type: 'water'}
             ]},
-            { id: 4, tee: {x: 2600, y: 750}, hole: {x: 2800, y: 400}, par: 4, obstacles: [
-                {x: 2650, y: 600, width: 100, height: 100, type: 'water'},
-                {x: 2750, y: 500, width: 50, height: 80, type: 'tree'}
+            // Template 4: Medium par 4 with woods
+            { par: 4, length: 350, obstacles: [
+                {width: 100, height: 100, type: 'water'},
+                {width: 50, height: 80, type: 'tree'}
             ]},
-            { id: 5, tee: {x: 2700, y: 300}, hole: {x: 2400, y: 100}, par: 3, obstacles: [
-                {x: 2550, y: 200, width: 100, height: 80, type: 'bunker'}
+            // Template 5: Challenging par 3
+            { par: 3, length: 180, obstacles: [
+                {width: 100, height: 80, type: 'bunker'}
             ]},
-            { id: 6, tee: {x: 2300, y: 50}, hole: {x: 1900, y: 200}, par: 4, obstacles: [
-                {x: 2100, y: 100, width: 150, height: 120, type: 'water'},
-                {x: 2000, y: 150, width: 60, height: 100, type: 'tree'}
-            ]},
-            { id: 7, tee: {x: 1800, y: 250}, hole: {x: 1400, y: 500}, par: 5, obstacles: [
-                {x: 1700, y: 300, width: 80, height: 150, type: 'tree'},
-                {x: 1500, y: 400, width: 120, height: 80, type: 'bunker'}
-            ]},
-            { id: 8, tee: {x: 1300, y: 550}, hole: {x: 900, y: 400}, par: 4, obstacles: [
-                {x: 1150, y: 500, width: 100, height: 120, type: 'water'},
-                {x: 1000, y: 450, width: 70, height: 90, type: 'tree'}
-            ]},
-            { id: 9, tee: {x: 800, y: 350}, hole: {x: 400, y: 200}, par: 3, obstacles: [
-                {x: 600, y: 275, width: 120, height: 100, type: 'bunker'}
-            ]},
-            
-            // Back 9 - Different areas of the course, scattered layout
-            { id: 10, tee: {x: 300, y: 300}, hole: {x: 200, y: 700}, par: 4, obstacles: [
-                {x: 250, y: 450, width: 100, height: 80, type: 'water'},
-                {x: 220, y: 600, width: 60, height: 100, type: 'tree'}
-            ]},
-            { id: 11, tee: {x: 150, y: 800}, hole: {x: 500, y: 1000}, par: 3, obstacles: [
-                {x: 300, y: 900, width: 80, height: 120, type: 'bunker'}
-            ]},
-            { id: 12, tee: {x: 600, y: 1100}, hole: {x: 1000, y: 1300}, par: 5, obstacles: [
-                {x: 700, y: 1150, width: 120, height: 60, type: 'water'},
-                {x: 850, y: 1200, width: 80, height: 100, type: 'tree'},
-                {x: 950, y: 1250, width: 150, height: 80, type: 'bunker'}
-            ]},
-            { id: 13, tee: {x: 1100, y: 1400}, hole: {x: 800, y: 1700}, par: 4, obstacles: [
-                {x: 950, y: 1500, width: 100, height: 100, type: 'bunker'},
-                {x: 850, y: 1600, width: 60, height: 80, type: 'tree'}
-            ]},
-            { id: 14, tee: {x: 700, y: 1800}, hole: {x: 400, y: 1600}, par: 3, obstacles: [
-                {x: 550, y: 1700, width: 120, height: 80, type: 'water'}
-            ]},
-            { id: 15, tee: {x: 300, y: 1500}, hole: {x: 600, y: 1200}, par: 5, obstacles: [
-                {x: 350, y: 1400, width: 80, height: 100, type: 'tree'},
-                {x: 500, y: 1300, width: 140, height: 70, type: 'bunker'}
-            ]},
-            { id: 16, tee: {x: 700, y: 1100}, hole: {x: 1100, y: 900}, par: 4, obstacles: [
-                {x: 850, y: 1000, width: 100, height: 80, type: 'water'},
-                {x: 1000, y: 950, width: 50, height: 90, type: 'tree'}
-            ]},
-            { id: 17, tee: {x: 1200, y: 800}, hole: {x: 1600, y: 600}, par: 3, obstacles: [
-                {x: 1350, y: 700, width: 120, height: 80, type: 'bunker'}
-            ]},
-            { id: 18, tee: {x: 1700, y: 550}, hole: {x: 1500, y: 900}, par: 4, obstacles: [
-                {x: 1600, y: 650, width: 200, height: 60, type: 'water'},
-                {x: 1550, y: 750, width: 60, height: 80, type: 'tree'},
-                {x: 1520, y: 850, width: 100, height: 60, type: 'bunker'}
+            // Template 6: Strategic par 4
+            { par: 4, length: 400, obstacles: [
+                {width: 150, height: 120, type: 'water'},
+                {width: 60, height: 100, type: 'tree'}
             ]}
         ];
+        
+        // Grid system to ensure no overlapping - divide course into sections
+        const sectionsX = 6; // 6 columns
+        const sectionsY = 3; // 3 rows
+        const sectionWidth = this.courseWidth / sectionsX;
+        const sectionHeight = this.courseHeight / sectionsY;
+        
+        // Create 18 holes using grid placement
+        for (let i = 0; i < 18; i++) {
+            const template = holeTemplates[i % holeTemplates.length];
+            let attempts = 0;
+            let validHole = null;
+            
+            // Try to place hole in available sections
+            while (attempts < 100 && !validHole) {
+                // Pick a grid section
+                const sectionX = Math.floor(Math.random() * sectionsX);
+                const sectionY = Math.floor(Math.random() * sectionsY);
+                
+                // Place within section with margins
+                const margin = 100;
+                const teeX = sectionX * sectionWidth + margin + Math.random() * (sectionWidth - 2 * margin);
+                const teeY = sectionY * sectionHeight + margin + Math.random() * (sectionHeight - 2 * margin);
+                
+                // Calculate hole position based on template
+                const angle = Math.random() * 2 * Math.PI; // Random direction
+                const holeX = teeX + Math.cos(angle) * template.length;
+                const holeY = teeY + Math.sin(angle) * template.length;
+                
+                // Make sure hole is within course bounds
+                if (holeX < margin || holeX > this.courseWidth - margin ||
+                    holeY < margin || holeY > this.courseHeight - margin) {
+                    attempts++;
+                    continue;
+                }
+                
+                // Create obstacles along the fairway
+                const obstacles = [];
+                template.obstacles.forEach((obsTemplate, obsIndex) => {
+                    const t = (obsIndex + 1) / (template.obstacles.length + 1);
+                    const obsX = teeX + t * (holeX - teeX) + (Math.random() - 0.5) * 100;
+                    const obsY = teeY + t * (holeY - teeY) + (Math.random() - 0.5) * 100;
+                    
+                    obstacles.push({
+                        x: obsX,
+                        y: obsY,
+                        width: obsTemplate.width,
+                        height: obsTemplate.height,
+                        type: obsTemplate.type
+                    });
+                });
+                
+                const testHole = {
+                    id: i + 1,
+                    tee: { x: teeX, y: teeY },
+                    hole: { x: holeX, y: holeY },
+                    par: template.par,
+                    obstacles: obstacles
+                };
+                
+                // Check if this hole overlaps with existing holes
+                if (!this.holeOverlapsWithExisting(testHole, this.holes)) {
+                    validHole = testHole;
+                }
+                
+                attempts++;
+            }
+            
+            if (validHole) {
+                this.holes.push(validHole);
+                console.log(`Hole ${i + 1} placed successfully after ${attempts} attempts`);
+            } else {
+                console.error(`Could not place hole ${i + 1} without overlap!`);
+                // Fallback: place in a guaranteed empty area
+                const fallbackX = 300 + (i % 6) * 400;
+                const fallbackY = 300 + Math.floor(i / 6) * 500;
+                
+                this.holes.push({
+                    id: i + 1,
+                    tee: { x: fallbackX, y: fallbackY },
+                    hole: { x: fallbackX + 200, y: fallbackY + 200 },
+                    par: 4,
+                    obstacles: [{x: fallbackX + 100, y: fallbackY + 100, width: 80, height: 80, type: 'bunker'}]
+                });
+            }
+        }
+        
+        console.log(`Successfully created ${this.holes.length} non-overlapping holes!`);
         
         // Add custom fairway paths to each hole (initially straight lines)
         this.holes.forEach(hole => {
@@ -188,15 +348,79 @@ class GolfCoursePlanner {
         let hasMoved = false;
         
         this.canvas.addEventListener('mousedown', (e) => {
-            isPanning = true;
-            hasMoved = false;
-            lastPanX = e.clientX;
-            lastPanY = e.clientY;
-            this.canvas.style.cursor = 'grabbing';
+            const rect = this.canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - this.camera.x) / this.camera.scale;
+            const y = (e.clientY - rect.top - this.camera.y) / this.camera.scale;
+            
+            if (this.designMode && this.selectedHoleIndex >= 0) {
+                // In design mode, handle hole editing
+                const selectedHole = this.holes[this.selectedHoleIndex];
+                
+                // Check if clicking on tee
+                const teeDistance = Math.sqrt((x - selectedHole.tee.x) ** 2 + (y - selectedHole.tee.y) ** 2);
+                if (teeDistance < 30) {
+                    this.isDraggingTee = true;
+                    return;
+                }
+                
+                // Check if clicking on hole
+                const holeDistance = Math.sqrt((x - selectedHole.hole.x) ** 2 + (y - selectedHole.hole.y) ** 2);
+                if (holeDistance < 30) {
+                    this.isDraggingHole = true;
+                    return;
+                }
+                
+                // Check if clicking on obstacle to delete it
+                for (let i = selectedHole.obstacles.length - 1; i >= 0; i--) {
+                    const obstacle = selectedHole.obstacles[i];
+                    if (x >= obstacle.x && x <= obstacle.x + obstacle.width &&
+                        y >= obstacle.y && y <= obstacle.y + obstacle.height) {
+                        selectedHole.obstacles.splice(i, 1);
+                        this.updateCanvas();
+                        return;
+                    }
+                }
+                
+                // Add new obstacle at click location
+                selectedHole.obstacles.push({
+                    x: x - 50,
+                    y: y - 40,
+                    width: 100,
+                    height: 80,
+                    type: this.obstacleMode
+                });
+                this.updateCanvas();
+            } else {
+                // Normal camera movement
+                isPanning = true;
+                hasMoved = false;
+                lastPanX = e.clientX;
+                lastPanY = e.clientY;
+                this.canvas.style.cursor = 'grabbing';
+            }
             e.preventDefault();
         });
         
         this.canvas.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - this.camera.x) / this.camera.scale;
+            const y = (e.clientY - rect.top - this.camera.y) / this.camera.scale;
+            
+            if (this.designMode && this.selectedHoleIndex >= 0) {
+                // Handle dragging tee or hole
+                if (this.isDraggingTee) {
+                    this.holes[this.selectedHoleIndex].tee.x = x;
+                    this.holes[this.selectedHoleIndex].tee.y = y;
+                    this.updateCanvas();
+                    return;
+                } else if (this.isDraggingHole) {
+                    this.holes[this.selectedHoleIndex].hole.x = x;
+                    this.holes[this.selectedHoleIndex].hole.y = y;
+                    this.updateCanvas();
+                    return;
+                }
+            }
+            
             if (isPanning) {
                 const deltaX = e.clientX - lastPanX;
                 const deltaY = e.clientY - lastPanY;
@@ -225,33 +449,14 @@ class GolfCoursePlanner {
         });
         
         this.canvas.addEventListener('mouseup', (e) => {
-            // Handle hole selection in design mode
-            if (this.designMode && !hasMoved) {
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                // Convert screen coordinates to world coordinates
-                const worldX = (mouseX / this.camera.scale) + this.camera.x;
-                const worldY = (mouseY / this.camera.scale) + this.camera.y;
-                
-                // Check if click is on any hole's tee box
-                this.holes.forEach(hole => {
-                    const teeDistance = Math.sqrt(
-                        Math.pow(worldX - hole.tee.x, 2) + 
-                        Math.pow(worldY - hole.tee.y, 2)
-                    );
-                    
-                    // Tee box is now 60x60, so check if within 40 pixels of center
-                    if (teeDistance <= 40) {
-                        this.selectHole(hole);
-                        this.updateCanvas();
-                    }
-                });
+            if (this.designMode) {
+                // Stop dragging
+                this.isDraggingTee = false;
+                this.isDraggingHole = false;
             }
             
             isPanning = false;
-            this.canvas.style.cursor = this.designMode ? 'crosshair' : 'grab';
+            this.canvas.style.cursor = 'grab';
         });
         
         this.canvas.addEventListener('mouseleave', () => {
@@ -758,6 +963,42 @@ class GolfCoursePlanner {
         gradient.addColorStop(1, '#32CD32');
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.courseWidth, this.courseHeight);
+        
+        // Draw large landscape features first (behind everything)
+        if (this.landscapeFeatures) {
+            this.landscapeFeatures.forEach(feature => {
+                switch(feature.type) {
+                    case 'water':
+                        this.ctx.fillStyle = '#1565C0';
+                        break;
+                    case 'forest':
+                        this.ctx.fillStyle = '#1B5E20';
+                        break;
+                    case 'bunker':
+                        this.ctx.fillStyle = '#D4AF37';
+                        break;
+                }
+                this.ctx.fillRect(feature.x, feature.y, feature.width, feature.height);
+                
+                // Add texture to landscape features
+                if (feature.type === 'forest') {
+                    this.ctx.fillStyle = '#0D4E15';
+                    for (let i = 0; i < 20; i++) {
+                        const treeX = feature.x + Math.random() * feature.width;
+                        const treeY = feature.y + Math.random() * feature.height;
+                        this.ctx.fillRect(treeX, treeY, 8, 12);
+                    }
+                } else if (feature.type === 'water') {
+                    // Add water wave effect
+                    this.ctx.fillStyle = '#0D47A1';
+                    for (let i = 0; i < 15; i++) {
+                        const waveX = feature.x + Math.random() * feature.width;
+                        const waveY = feature.y + Math.random() * feature.height;
+                        this.ctx.fillRect(waveX, waveY, 4, 2);
+                    }
+                }
+            });
+        }
         
         // Add grass texture pattern
         this.ctx.fillStyle = 'rgba(0, 100, 0, 0.1)';
