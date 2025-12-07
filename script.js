@@ -9,6 +9,11 @@ class GolfCoursePlanner {
         this.messages = document.getElementById('messages');
         this.scoreboardContent = document.getElementById('scoreboard-content');
         
+        // Check if elements exist
+        if (!this.addPlayerBtn) {
+            console.error('Add player button not found!');
+        }
+        
         // Game state
         this.players = [];
         this.currentPlayerIndex = 0;
@@ -22,6 +27,7 @@ class GolfCoursePlanner {
         // Course layout
         this.setupCourse();
         this.setupEventListeners();
+        this.centerView(); // Initialize with proper view
         this.updateCanvas();
         this.gameLoop();
     }
@@ -107,30 +113,51 @@ class GolfCoursePlanner {
     }
     
     setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
         // Add player button
-        this.addPlayerBtn.addEventListener('click', () => {
-            this.addPlayer();
-        });
+        if (this.addPlayerBtn) {
+            this.addPlayerBtn.addEventListener('click', () => {
+                console.log('Add player button clicked!');
+                this.addPlayer();
+            });
+            console.log('Add player button listener added');
+        } else {
+            console.error('Add player button not found!');
+        }
         
         // Enter key in name input
-        this.playerNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.addPlayer();
-            }
-        });
+        if (this.playerNameInput) {
+            this.playerNameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('Enter key pressed in name input');
+                    this.addPlayer();
+                }
+            });
+        }
         
         // Zoom controls with proper centering
-        document.getElementById('zoom-in').addEventListener('click', () => {
-            this.zoomAt(this.canvas.width / 2, this.canvas.height / 2, 1.3);
-        });
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const centerBtn = document.getElementById('center-course');
         
-        document.getElementById('zoom-out').addEventListener('click', () => {
-            this.zoomAt(this.canvas.width / 2, this.canvas.height / 2, 1 / 1.3);
-        });
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener('click', () => {
+                this.zoomAt(this.canvas.width / 2, this.canvas.height / 2, 1.3);
+            });
+        }
         
-        document.getElementById('center-course').addEventListener('click', () => {
-            this.centerView();
-        });
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener('click', () => {
+                this.zoomAt(this.canvas.width / 2, this.canvas.height / 2, 1 / 1.3);
+            });
+        }
+        
+        if (centerBtn) {
+            centerBtn.addEventListener('click', () => {
+                this.centerView();
+            });
+        }
         
         // Mouse wheel zoom with proper center point
         this.canvas.addEventListener('wheel', (e) => {
@@ -242,10 +269,15 @@ class GolfCoursePlanner {
             isPanning = false;
             e.preventDefault();
         });
+        
+        console.log('Event listeners setup complete');
     }
     
     addPlayer() {
+        console.log('addPlayer function called');
         const name = this.playerNameInput.value.trim();
+        console.log('Player name:', name);
+        
         if (name && name.length <= 12) {
             const color = this.generatePlayerColor(this.players.length);
             const player = {
@@ -263,6 +295,9 @@ class GolfCoursePlanner {
             this.playerNameInput.value = '';
             this.updatePlayerList();
             this.updateScoreboard();
+            
+            console.log('Player added:', player);
+            console.log('Total players:', this.players.length);
             
             if (this.players.length === 1) {
                 this.startGame();
@@ -637,14 +672,42 @@ class GolfCoursePlanner {
         this.ctx.scale(this.camera.scale, this.camera.scale);
         this.ctx.translate(-this.camera.x, -this.camera.y);
         
-        // Draw background
-        this.ctx.fillStyle = '#228B22';
+        // Draw course background with gradient
+        const gradient = this.ctx.createLinearGradient(0, 0, this.courseWidth, this.courseHeight);
+        gradient.addColorStop(0, '#2d5016');
+        gradient.addColorStop(0.5, '#228B22');
+        gradient.addColorStop(1, '#32CD32');
+        this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.courseWidth, this.courseHeight);
+        
+        // Add grass texture pattern
+        this.ctx.fillStyle = 'rgba(0, 100, 0, 0.1)';
+        for (let x = 0; x < this.courseWidth; x += 40) {
+            for (let y = 0; y < this.courseHeight; y += 40) {
+                if (Math.random() > 0.7) {
+                    this.ctx.fillRect(x, y, 20, 3);
+                    this.ctx.fillRect(x + 10, y + 15, 15, 3);
+                }
+            }
+        }
         
         // Draw course outline
         this.ctx.strokeStyle = '#1a5c1a';
-        this.ctx.lineWidth = 10;
-        this.ctx.strokeRect(0, 0, this.courseWidth, this.courseHeight);
+        this.ctx.lineWidth = 8;
+        this.ctx.strokeRect(5, 5, this.courseWidth - 10, this.courseHeight - 10);
+        
+        // Draw paths between holes
+        this.ctx.strokeStyle = 'rgba(139, 69, 19, 0.4)';
+        this.ctx.lineWidth = 15;
+        this.ctx.lineCap = 'round';
+        this.ctx.beginPath();
+        for (let i = 0; i < this.holes.length - 1; i++) {
+            const currentHole = this.holes[i];
+            const nextHole = this.holes[i + 1];
+            this.ctx.moveTo(currentHole.hole.x, currentHole.hole.y);
+            this.ctx.lineTo(nextHole.tee.x, nextHole.tee.y);
+        }
+        this.ctx.stroke();
         
         // Draw holes
         this.holes.forEach(hole => {
@@ -656,99 +719,206 @@ class GolfCoursePlanner {
             this.drawPlayer(player, index === this.currentPlayerIndex);
         });
         
+        // Draw course title
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        this.ctx.font = 'bold 48px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeText('Championship Golf Course', this.courseWidth / 2, 80);
+        this.ctx.fillText('Championship Golf Course', this.courseWidth / 2, 80);
+        
         this.ctx.restore();
     }
     
     drawHole(hole) {
-        // Draw tee
-        this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(hole.tee.x - 8, hole.tee.y - 8, 16, 16);
+        // Draw fairway
+        const fairwayWidth = 60;
+        const dx = hole.hole.x - hole.tee.x;
+        const dy = hole.hole.y - hole.tee.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        // Draw fairway as green strip
+        this.ctx.fillStyle = '#90EE90';
+        this.ctx.save();
+        this.ctx.translate(hole.tee.x, hole.tee.y);
+        this.ctx.rotate(angle);
+        this.ctx.fillRect(-fairwayWidth/2, -fairwayWidth/2, distance + fairwayWidth, fairwayWidth);
+        this.ctx.restore();
+        
+        // Draw tee box
+        this.ctx.fillStyle = '#6B8E23';
+        this.ctx.fillRect(hole.tee.x - 20, hole.tee.y - 20, 40, 40);
+        this.ctx.strokeStyle = '#556B2F';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(hole.tee.x - 20, hole.tee.y - 20, 40, 40);
+        
+        // Draw green around hole
+        this.ctx.fillStyle = '#7CFC00';
+        this.ctx.beginPath();
+        this.ctx.arc(hole.hole.x, hole.hole.y, 30, 0, Math.PI * 2);
+        this.ctx.fill();
         
         // Draw hole
         this.ctx.fillStyle = '#000000';
         this.ctx.beginPath();
-        this.ctx.arc(hole.hole.x, hole.hole.y, 12, 0, Math.PI * 2);
+        this.ctx.arc(hole.hole.x, hole.hole.y, 8, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Draw flag
-        this.ctx.strokeStyle = '#8B4513';
+        // Draw hole rim
+        this.ctx.strokeStyle = '#333333';
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
-        this.ctx.moveTo(hole.hole.x + 12, hole.hole.y);
-        this.ctx.lineTo(hole.hole.x + 12, hole.hole.y - 30);
+        this.ctx.arc(hole.hole.x, hole.hole.y, 8, 0, Math.PI * 2);
         this.ctx.stroke();
         
-        this.ctx.fillStyle = '#FF0000';
-        this.ctx.fillRect(hole.hole.x + 12, hole.hole.y - 30, 15, 10);
+        // Draw flag pole
+        this.ctx.strokeStyle = '#FFFFFF';
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(hole.hole.x + 8, hole.hole.y);
+        this.ctx.lineTo(hole.hole.x + 8, hole.hole.y - 40);
+        this.ctx.stroke();
         
-        // Draw hole number
+        // Draw flag
+        this.ctx.fillStyle = '#FF0000';
+        this.ctx.beginPath();
+        this.ctx.moveTo(hole.hole.x + 8, hole.hole.y - 40);
+        this.ctx.lineTo(hole.hole.x + 28, hole.hole.y - 30);
+        this.ctx.lineTo(hole.hole.x + 8, hole.hole.y - 20);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Draw hole number (larger and more visible)
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = 'bold 16px Arial';
+        this.ctx.font = 'bold 24px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeText(hole.id.toString(), hole.tee.x, hole.tee.y - 15);
-        this.ctx.fillText(hole.id.toString(), hole.tee.x, hole.tee.y - 15);
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeText(hole.id.toString(), hole.tee.x, hole.tee.y - 30);
+        this.ctx.fillText(hole.id.toString(), hole.tee.x, hole.tee.y - 30);
         
-        // Draw par
-        this.ctx.fillStyle = '#FFFF00';
-        this.ctx.font = '12px Arial';
+        // Draw par (more visible)
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 16px Arial';
         this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeText(`Par ${hole.par}`, hole.hole.x, hole.hole.y - 20);
-        this.ctx.fillText(`Par ${hole.par}`, hole.hole.x, hole.hole.y - 20);
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeText(`Par ${hole.par}`, hole.hole.x, hole.hole.y - 50);
+        this.ctx.fillText(`Par ${hole.par}`, hole.hole.x, hole.hole.y - 50);
         
         // Draw obstacles
         hole.obstacles.forEach(obstacle => {
             this.drawObstacle(obstacle);
         });
         
-        // Draw fairway line
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 3;
-        this.ctx.setLineDash([10, 10]);
-        this.ctx.beginPath();
-        this.ctx.moveTo(hole.tee.x, hole.tee.y);
-        this.ctx.lineTo(hole.hole.x, hole.hole.y);
-        this.ctx.stroke();
-        this.ctx.setLineDash([]);
+        // Draw yardage
+        const yardage = Math.round(distance / 2); // Simplified yardage calculation
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.font = '12px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(`${yardage} yards`, hole.tee.x + dx/2, hole.tee.y + dy/2);
     }
     
     drawObstacle(obstacle) {
+        // Use radius-based drawing for circular obstacles
+        const radius = obstacle.radius || Math.min(obstacle.width, obstacle.height) / 2;
+        const centerX = obstacle.x + (obstacle.width || 0) / 2;
+        const centerY = obstacle.y + (obstacle.height || 0) / 2;
+        
         switch (obstacle.type) {
             case 'bunker':
-                this.ctx.fillStyle = '#DEB887';
-                this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                // Add sand texture
-                this.ctx.fillStyle = '#F5DEB3';
-                for (let i = 0; i < 5; i++) {
-                    const x = obstacle.x + Math.random() * obstacle.width;
-                    const y = obstacle.y + Math.random() * obstacle.height;
-                    this.ctx.fillRect(x, y, 3, 3);
+                // Draw bunker with sand texture
+                this.ctx.fillStyle = '#F4E4B5';
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Add sand texture with dots
+                this.ctx.fillStyle = '#E6D19C';
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2;
+                    const r = radius * 0.7;
+                    const x = centerX + Math.cos(angle) * r * Math.random();
+                    const y = centerY + Math.sin(angle) * r * Math.random();
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 2, 0, Math.PI * 2);
+                    this.ctx.fill();
                 }
+                
+                // Bunker edge
+                this.ctx.strokeStyle = '#D2B48C';
+                this.ctx.lineWidth = 3;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                this.ctx.stroke();
                 break;
+                
             case 'water':
+                // Draw water with animated ripples
                 this.ctx.fillStyle = '#4169E1';
-                this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                // Add water animation
-                this.ctx.fillStyle = '#6495ED';
-                for (let i = 0; i < obstacle.width; i += 20) {
-                    const waveHeight = Math.sin(Date.now() * 0.003 + i * 0.1) * 3;
-                    this.ctx.fillRect(obstacle.x + i, obstacle.y + waveHeight, 10, obstacle.height);
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Add ripple effect
+                const rippleCount = 3;
+                for (let i = 0; i < rippleCount; i++) {
+                    this.ctx.strokeStyle = `rgba(135, 206, 235, ${0.6 - i * 0.2})`;
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    const rippleRadius = radius * (0.3 + i * 0.3);
+                    this.ctx.arc(centerX, centerY, rippleRadius, 0, Math.PI * 2);
+                    this.ctx.stroke();
                 }
+                
+                // Water edge
+                this.ctx.strokeStyle = '#191970';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                this.ctx.stroke();
                 break;
+                
             case 'tree':
-                // Tree trunk
+                // Draw tree trunk
                 this.ctx.fillStyle = '#8B4513';
-                this.ctx.fillRect(obstacle.x + obstacle.width * 0.3, obstacle.y + obstacle.height * 0.6, 
-                                obstacle.width * 0.4, obstacle.height * 0.4);
-                // Tree foliage
+                this.ctx.fillRect(centerX - 6, centerY - radius, 12, radius);
+                
+                // Draw tree canopy
                 this.ctx.fillStyle = '#228B22';
                 this.ctx.beginPath();
-                this.ctx.arc(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height * 0.3, 
-                           obstacle.width * 0.4, 0, Math.PI * 2);
+                this.ctx.arc(centerX, centerY - radius + 10, radius - 10, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Add tree texture with multiple shades
+                this.ctx.fillStyle = '#32CD32';
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const r = (radius - 10) * 0.6;
+                    const x = centerX + Math.cos(angle) * r * Math.random();
+                    const y = (centerY - radius + 10) + Math.sin(angle) * r * Math.random();
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Tree shadow
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                this.ctx.beginPath();
+                this.ctx.ellipse(centerX + 5, centerY + 5, radius * 0.8, radius * 0.3, 0, 0, Math.PI * 2);
                 this.ctx.fill();
                 break;
+                
+            default:
+                // Generic obstacle
+                this.ctx.fillStyle = '#696969';
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#2F4F4F';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
         }
     }
     
