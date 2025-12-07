@@ -138,6 +138,19 @@ body {
     font-weight: bold;
 }
 
+.game-status {
+    text-align: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-style: italic;
+}
+
+.game-status p {
+    margin: 5px 0;
+    color: #90EE90;
+}
+
 .power-control {
     display: flex;
     align-items: center;
