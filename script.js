@@ -224,9 +224,34 @@ class GolfCoursePlanner {
             }
         });
         
-        this.canvas.addEventListener('mouseup', () => {
+        this.canvas.addEventListener('mouseup', (e) => {
+            // Handle hole selection in design mode
+            if (this.designMode && !hasMoved) {
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                // Convert screen coordinates to world coordinates
+                const worldX = (mouseX / this.camera.scale) + this.camera.x;
+                const worldY = (mouseY / this.camera.scale) + this.camera.y;
+                
+                // Check if click is on any hole's tee box
+                this.holes.forEach(hole => {
+                    const teeDistance = Math.sqrt(
+                        Math.pow(worldX - hole.tee.x, 2) + 
+                        Math.pow(worldY - hole.tee.y, 2)
+                    );
+                    
+                    // Tee box is 40x40, so check if within 30 pixels of center
+                    if (teeDistance <= 30) {
+                        this.selectHole(hole);
+                        this.updateCanvas();
+                    }
+                });
+            }
+            
             isPanning = false;
-            this.canvas.style.cursor = 'grab';
+            this.canvas.style.cursor = this.designMode ? 'crosshair' : 'grab';
         });
         
         this.canvas.addEventListener('mouseleave', () => {
@@ -1057,6 +1082,115 @@ class GolfCoursePlanner {
         
         this.updateCanvas();
         requestAnimationFrame(() => this.gameLoop());
+    }
+    
+    // Course Designer Methods
+    enterDesignMode() {
+        this.designMode = true;
+        this.gameActive = false; // Pause the game
+        this.canvas.style.cursor = 'crosshair';
+        
+        // Show designer panel
+        const designerPanel = document.getElementById('course-designer');
+        if (designerPanel) {
+            designerPanel.style.display = 'block';
+        }
+        
+        // Update messages
+        if (this.messages) {
+            this.messages.textContent = 'Design Mode: Click on any hole number to select it, then choose a fairway preset.';
+        }
+        
+        this.updateCanvas();
+    }
+    
+    exitDesignMode() {
+        this.designMode = false;
+        this.selectedHole = null;
+        this.canvas.style.cursor = 'grab';
+        
+        // Hide designer panel
+        const designerPanel = document.getElementById('course-designer');
+        if (designerPanel) {
+            designerPanel.style.display = 'none';
+        }
+        
+        // Update messages
+        if (this.messages) {
+            this.messages.textContent = this.players.length > 0 ? 
+                'Game resumed! Watch the AI players compete.' : 
+                'Click "Add Player" to start the game!';
+        }
+        
+        // Resume game if players exist
+        if (this.players.length > 0) {
+            this.gameActive = true;
+        }
+        
+        this.updateCanvas();
+    }
+    
+    selectHole(hole) {
+        this.selectedHole = hole;
+        
+        // Update selected hole display
+        const selectedHoleSpan = document.getElementById('selected-hole');
+        if (selectedHoleSpan) {
+            selectedHoleSpan.textContent = `Hole ${hole.id} (Par ${hole.par})`;
+        }
+        
+        console.log(`Selected hole ${hole.id}`);
+    }
+    
+    clearCustomFairway() {
+        if (this.selectedHole) {
+            this.selectedHole.customFairway = null;
+            this.updateCanvas();
+            console.log(`Cleared custom fairway for hole ${this.selectedHole.id}`);
+        }
+    }
+    
+    applyPreset(presetType) {
+        if (!this.selectedHole) {
+            alert('Please select a hole first by clicking on its tee box (the brown square with the hole number).');
+            return;
+        }
+        
+        const hole = this.selectedHole;
+        const tee = hole.tee;
+        const target = hole.hole;
+        
+        switch (presetType) {
+            case 'straight':
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+                
+            case 'dogleg-left':
+                const midLeftX = (tee.x + target.x) / 2 - 80;
+                const midLeftY = (tee.y + target.y) / 2;
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: midLeftX, y: midLeftY },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+                
+            case 'dogleg-right':
+                const midRightX = (tee.x + target.x) / 2 + 80;
+                const midRightY = (tee.y + target.y) / 2;
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: midRightX, y: midRightY },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+        }
+        
+        this.updateCanvas();
+        console.log(`Applied ${presetType} preset to hole ${hole.id}`);
     }
     
     // Course Designer Methods
