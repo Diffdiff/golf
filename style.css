@@ -385,18 +385,34 @@ button:disabled {
 }
 
 .designer-controls button:nth-child(2) {
-    background: linear-gradient(135deg, #4169E1 0%, #1E90FF 100%);
-}
-
-.designer-controls button:nth-child(3) {
-    background: linear-gradient(135deg, #FF8C00 0%, #FF7F50 100%);
-}
-
-.designer-controls button:nth-child(4) {
     background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
 }
 
+.designer-controls button:nth-child(3) {
+    background: linear-gradient(135deg, #4169E1 0%, #1E90FF 100%);
+}
+
+.designer-controls button:nth-child(4) {
+    background: linear-gradient(135deg, #FF8C00 0%, #FF7F50 100%);
+}
+
 .designer-controls button:nth-child(5) {
+    background: linear-gradient(135deg, #9932CC 0%, #8A2BE2 100%);
+}
+
+.designer-controls button:nth-child(6) {
+    background: linear-gradient(135deg, #FF1493 0%, #DC143C 100%);
+}
+
+.designer-controls button:nth-child(7) {
+    background: linear-gradient(135deg, #00CED1 0%, #20B2AA 100%);
+}
+
+.designer-controls button:nth-child(8) {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+}
+
+.designer-controls button:nth-child(9) {
     background: linear-gradient(135deg, #696969 0%, #2F4F4F 100%);
 }
 

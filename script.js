@@ -35,17 +35,17 @@ class GolfCoursePlanner {
     setupCourse() {
         // Define 18 holes in a top-down course layout
         this.holes = [
-            // Front 9
-            { id: 1, tee: {x: 200, y: 1800}, hole: {x: 400, y: 1600}, par: 4, obstacles: [
-                {x: 250, y: 1700, width: 80, height: 60, type: 'bunker'},
-                {x: 350, y: 1650, width: 40, height: 80, type: 'tree'}
+            // Front 9 - Much larger scale holes
+            { id: 1, tee: {x: 300, y: 1700}, hole: {x: 800, y: 1500}, par: 4, obstacles: [
+                {x: 450, y: 1650, width: 120, height: 80, type: 'bunker'},
+                {x: 650, y: 1550, width: 60, height: 100, type: 'tree'}
             ]},
-            { id: 2, tee: {x: 500, y: 1600}, hole: {x: 700, y: 1400}, par: 3, obstacles: [
-                {x: 550, y: 1500, width: 100, height: 40, type: 'water'}
+            { id: 2, tee: {x: 200, y: 1400}, hole: {x: 600, y: 1200}, par: 3, obstacles: [
+                {x: 350, y: 1300, width: 150, height: 60, type: 'water'}
             ]},
-            { id: 3, tee: {x: 800, y: 1400}, hole: {x: 1100, y: 1200}, par: 5, obstacles: [
-                {x: 900, y: 1350, width: 60, height: 100, type: 'tree'},
-                {x: 1000, y: 1250, width: 120, height: 60, type: 'bunker'}
+            { id: 3, tee: {x: 100, y: 1100}, hole: {x: 700, y: 800}, par: 5, obstacles: [
+                {x: 300, y: 1000, width: 80, height: 120, type: 'tree'},
+                {x: 500, y: 900, width: 180, height: 80, type: 'bunker'}
             ]},
             { id: 4, tee: {x: 1200, y: 1200}, hole: {x: 1400, y: 1000}, par: 4, obstacles: [
                 {x: 1300, y: 1100, width: 80, height: 80, type: 'water'},
@@ -242,8 +242,8 @@ class GolfCoursePlanner {
                         Math.pow(worldY - hole.tee.y, 2)
                     );
                     
-                    // Tee box is 40x40, so check if within 30 pixels of center
-                    if (teeDistance <= 30) {
+                    // Tee box is now 60x60, so check if within 40 pixels of center
+                    if (teeDistance <= 40) {
                         this.selectHole(hole);
                         this.updateCanvas();
                     }
@@ -310,9 +310,13 @@ class GolfCoursePlanner {
         const designModeBtn = document.getElementById('design-mode');
         const exitDesignerBtn = document.getElementById('exit-designer');
         const clearFairwayBtn = document.getElementById('clear-fairway');
+        const presetStraightBtn = document.getElementById('preset-straight');
         const presetDoglegLeftBtn = document.getElementById('preset-dogleg-left');
         const presetDoglegRightBtn = document.getElementById('preset-dogleg-right');
-        const presetStraightBtn = document.getElementById('preset-straight');
+        const presetSCurveBtn = document.getElementById('preset-s-curve');
+        const presetSharpLeftBtn = document.getElementById('preset-sharp-left');
+        const presetSharpRightBtn = document.getElementById('preset-sharp-right');
+        const presetUTurnBtn = document.getElementById('preset-u-turn');
         
         if (designModeBtn) {
             designModeBtn.addEventListener('click', () => this.enterDesignMode());
@@ -323,14 +327,26 @@ class GolfCoursePlanner {
         if (clearFairwayBtn) {
             clearFairwayBtn.addEventListener('click', () => this.clearCustomFairway());
         }
+        if (presetStraightBtn) {
+            presetStraightBtn.addEventListener('click', () => this.applyPreset('straight'));
+        }
         if (presetDoglegLeftBtn) {
             presetDoglegLeftBtn.addEventListener('click', () => this.applyPreset('dogleg-left'));
         }
         if (presetDoglegRightBtn) {
             presetDoglegRightBtn.addEventListener('click', () => this.applyPreset('dogleg-right'));
         }
-        if (presetStraightBtn) {
-            presetStraightBtn.addEventListener('click', () => this.applyPreset('straight'));
+        if (presetSCurveBtn) {
+            presetSCurveBtn.addEventListener('click', () => this.applyPreset('s-curve'));
+        }
+        if (presetSharpLeftBtn) {
+            presetSharpLeftBtn.addEventListener('click', () => this.applyPreset('sharp-left'));
+        }
+        if (presetSharpRightBtn) {
+            presetSharpRightBtn.addEventListener('click', () => this.applyPreset('sharp-right'));
+        }
+        if (presetUTurnBtn) {
+            presetUTurnBtn.addEventListener('click', () => this.applyPreset('u-turn'));
         }
         
         console.log('Event listeners setup complete');
@@ -796,7 +812,7 @@ class GolfCoursePlanner {
     
     drawHole(hole) {
         // Draw fairway - use custom path if available, otherwise straight line
-        const fairwayWidth = 60;
+        const fairwayWidth = 120; // Much wider fairways
         
         if (hole.customFairway && hole.customFairway.length > 1) {
             // Draw custom fairway path
@@ -827,30 +843,30 @@ class GolfCoursePlanner {
             this.ctx.restore();
         }
         
-        // Draw tee box
+        // Draw tee box (larger)
         this.ctx.fillStyle = '#6B8E23';
-        this.ctx.fillRect(hole.tee.x - 20, hole.tee.y - 20, 40, 40);
+        this.ctx.fillRect(hole.tee.x - 30, hole.tee.y - 30, 60, 60);
         this.ctx.strokeStyle = '#556B2F';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(hole.tee.x - 20, hole.tee.y - 20, 40, 40);
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(hole.tee.x - 30, hole.tee.y - 30, 60, 60);
         
-        // Draw green around hole
+        // Draw green around hole (larger)
         this.ctx.fillStyle = '#7CFC00';
         this.ctx.beginPath();
-        this.ctx.arc(hole.hole.x, hole.hole.y, 30, 0, Math.PI * 2);
+        this.ctx.arc(hole.hole.x, hole.hole.y, 50, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Draw hole
+        // Draw hole (larger)
         this.ctx.fillStyle = '#000000';
         this.ctx.beginPath();
-        this.ctx.arc(hole.hole.x, hole.hole.y, 8, 0, Math.PI * 2);
+        this.ctx.arc(hole.hole.x, hole.hole.y, 12, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Draw hole rim
+        // Draw hole rim (larger)
         this.ctx.strokeStyle = '#333333';
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 3;
         this.ctx.beginPath();
-        this.ctx.arc(hole.hole.x, hole.hole.y, 8, 0, Math.PI * 2);
+        this.ctx.arc(hole.hole.x, hole.hole.y, 12, 0, Math.PI * 2);
         this.ctx.stroke();
         
         // Draw flag pole
@@ -1159,6 +1175,9 @@ class GolfCoursePlanner {
         const hole = this.selectedHole;
         const tee = hole.tee;
         const target = hole.hole;
+        const midX = (tee.x + target.x) / 2;
+        const midY = (tee.y + target.y) / 2;
+        const distance = Math.sqrt(Math.pow(target.x - tee.x, 2) + Math.pow(target.y - tee.y, 2));
         
         switch (presetType) {
             case 'straight':
@@ -1169,8 +1188,8 @@ class GolfCoursePlanner {
                 break;
                 
             case 'dogleg-left':
-                const midLeftX = (tee.x + target.x) / 2 - 80;
-                const midLeftY = (tee.y + target.y) / 2;
+                const midLeftX = midX - 120;
+                const midLeftY = midY;
                 hole.customFairway = [
                     { x: tee.x, y: tee.y },
                     { x: midLeftX, y: midLeftY },
@@ -1179,11 +1198,59 @@ class GolfCoursePlanner {
                 break;
                 
             case 'dogleg-right':
-                const midRightX = (tee.x + target.x) / 2 + 80;
-                const midRightY = (tee.y + target.y) / 2;
+                const midRightX = midX + 120;
+                const midRightY = midY;
                 hole.customFairway = [
                     { x: tee.x, y: tee.y },
                     { x: midRightX, y: midRightY },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+                
+            case 's-curve':
+                const quarter1X = tee.x + (target.x - tee.x) * 0.25;
+                const quarter1Y = tee.y + (target.y - tee.y) * 0.25;
+                const quarter3X = tee.x + (target.x - tee.x) * 0.75;
+                const quarter3Y = tee.y + (target.y - tee.y) * 0.75;
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: quarter1X - 80, y: quarter1Y },
+                    { x: midX + 80, y: midY },
+                    { x: quarter3X - 80, y: quarter3Y },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+                
+            case 'sharp-left':
+                const sharpLeftX = midX - 200;
+                const sharpLeftY = midY - 50;
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: sharpLeftX, y: sharpLeftY },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+                
+            case 'sharp-right':
+                const sharpRightX = midX + 200;
+                const sharpRightY = midY - 50;
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: sharpRightX, y: sharpRightY },
+                    { x: target.x, y: target.y }
+                ];
+                break;
+                
+            case 'u-turn':
+                const uTurnX1 = midX - 150;
+                const uTurnY1 = midY - 100;
+                const uTurnX2 = midX + 150;
+                const uTurnY2 = midY - 100;
+                hole.customFairway = [
+                    { x: tee.x, y: tee.y },
+                    { x: uTurnX1, y: uTurnY1 },
+                    { x: midX, y: midY - 150 },
+                    { x: uTurnX2, y: uTurnY2 },
                     { x: target.x, y: target.y }
                 ];
                 break;
